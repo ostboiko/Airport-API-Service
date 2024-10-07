@@ -1,10 +1,12 @@
 import os
+import pathlib
 import uuid
 
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
 from django.utils.text import slugify
+
 
 class User(models.Model):
     username = models.CharField(max_length=60)
@@ -21,6 +23,9 @@ class Airport(models.Model):
     name = models.CharField(max_length=100)
     closest_big_city = models.CharField(max_length=100)
 
+    class Meta:
+        ordering = ["name"]
+
     def __str__(self):
         return f"{self.name} (Closest big city: {self.closest_big_city})"
 
@@ -34,16 +39,20 @@ class Route(models.Model):
         return f"{self.source} -> {self.destination}, {self.distance} km"
 
 
-# def movie_image_file_path(instance, filename):
-#     _, extension = os.path.splitext(filename)
-#     filename = f"{slugify(instance.title)}-{uuid.uuid4()}{extension}"
-#
-#     return os.path.join("uploads/movies/", filename)
+def create_custom_path(instance, filename):
+    _, extension = os.path.splitext(filename)
+    return os.path.join(
+        "upload/airplanes/",
+        f"{slugify(instance.title)}-{uuid.uuid4()}{extension}"
+    )
 
 
 class AirplaneType(models.Model):
     name = models.CharField(max_length=255)
-    # image = models.ImageField(null=True,)
+    image = models.ImageField(null=True, upload_to="???") # TODO refactore!!
+
+    class Meta:
+        ordering = ["name"]
 
     def __str__(self):
         return f"name"
@@ -72,11 +81,57 @@ class Order(models.Model):
     order_number = models.CharField(max_length=100, unique=True)
 
     def __str__(self):
-        return f"Order {self.order_number} by {self.user.username}"
+        return str(self.created_at)
+
+    class Meta:
+        ordering = ["-created_at"]
 
 
 class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.CharField(max_length=3)
-    flight = models.ForeignKey(Flight, on_delete=models.CASCADE)
-    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    flight = models.ForeignKey('Flight', on_delete=models.CASCADE)
+    order = models.ForeignKey('Order', on_delete=models.CASCADE)
+
+    @staticmethod
+    def validate_ticket(row, seat, flight, error_to_raise):
+        for ticket_attr_value, ticket_attr_name, flight_attr_name in [
+            (row, "row", "total_rows"),  # Припускаємо, що flight має поле для кількості рядів
+            (seat, "seat", "seats_in_row"),  # І для кількості місць у ряду
+        ]:
+            count_attrs = getattr(flight, flight_attr_name)
+            if not (1 <= ticket_attr_value <= count_attrs):
+                raise error_to_raise(
+                    {
+                        ticket_attr_name: f"{ticket_attr_name} number must be in available range: "
+                        f"(1, {flight_attr_name}): "
+                        f"(1, {count_attrs})"
+                    }
+                )
+
+    def clean(self):
+        Ticket.validate_ticket(
+            self.row,
+            self.seat,
+            self.flight,  # Використовуємо flight для перевірки
+            ValidationError,
+        )
+
+    def save(
+        self,
+        force_insert=False,
+        force_update=False,
+        using=None,
+        update_fields=None
+    ):
+        self.full_clean()  # Викликаємо перевірку перед збереженням
+        return super(Ticket, self).save(
+            force_insert, force_update, using, update_fields
+        )
+
+    def __str__(self):
+        return f"{str(self.flight)} (row: {self.row}, seat: {self.seat})"
+
+    class Meta:
+        unique_together = ("flight", "row", "seat")
+        ordering = ["row", "seat"]
