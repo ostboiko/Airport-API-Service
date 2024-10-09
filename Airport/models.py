@@ -62,6 +62,8 @@ class Flight(models.Model):
     route = models.ForeignKey(Route, on_delete=models.CASCADE)
     airplane = models.ForeignKey(AirplaneType, on_delete=models.CASCADE)
     flight_number = models.CharField(max_length=10)
+    total_rows = models.IntegerField(default=30)
+    seats_in_row = models.IntegerField(default=6)
 
     def __str__(self):
         return f"Flight {self.flight_number} on {self.airplane} {self.route}"
@@ -95,17 +97,27 @@ class Ticket(models.Model):
 
     @staticmethod
     def validate_ticket(row, seat, flight, error_to_raise):
+        try:
+            row = int(row)  # Перетворюємо рядок на ціле число
+        except ValueError:
+            raise error_to_raise({"row": "Row number must be an integer."})
+
+        try:
+            seat = int(seat)  # Перетворюємо місце на ціле число (якщо це число)
+        except ValueError:
+            raise error_to_raise({"seat": "Seat number must be an integer."})
+
         for ticket_attr_value, ticket_attr_name, flight_attr_name in [
-            (row, "row", "total_rows"),  # Припускаємо, що flight має поле для кількості рядів
-            (seat, "seat", "seats_in_row"),  # І для кількості місць у ряду
+            (row, "row", "total_rows"),  # Перевірка для кількості рядів
+            (seat, "seat", "seats_in_row"),  # Перевірка для кількості місць у ряду
         ]:
             count_attrs = getattr(flight, flight_attr_name)
             if not (1 <= ticket_attr_value <= count_attrs):
                 raise error_to_raise(
                     {
                         ticket_attr_name: f"{ticket_attr_name} number must be in available range: "
-                        f"(1, {flight_attr_name}): "
-                        f"(1, {count_attrs})"
+                                          f"(1, {flight_attr_name}): "
+                                          f"(1, {count_attrs})"
                     }
                 )
 
