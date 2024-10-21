@@ -31,7 +31,7 @@ class AirplaneTypeAdmin(admin.ModelAdmin):
 
 @admin.register(Flight)
 class FlightAdmin(admin.ModelAdmin):
-    list_display = ('flight_number', 'route', 'airplane', 'total_rows', 'seats_in_row')  # Додано total_rows і seats_in_row
+    list_display = ('flight_number', 'route', 'airplane', 'total_rows', 'seats_in_row')
     search_fields = ('flight_number', 'route__source__name', 'route__destination__name')
     list_filter = ('route', 'airplane')
 
@@ -55,14 +55,3 @@ class TicketAdmin(admin.ModelAdmin):
     list_display = ('flight', 'row', 'seat', 'order')
     search_fields = ('flight__flight_number', 'row', 'seat', 'order__order_number')
     list_filter = ('flight', 'row', 'seat')
-
-
-# Реєстрація моделей без додаткових налаштувань адмінки
-# admin.site.register(User)
-# admin.site.register(Airport)
-# admin.site.register(Route)
-# admin.site.register(AirplaneType)
-# admin.site.register(Flight)
-# admin.site.register(Crew)
-# admin.site.register(Order)
-# admin.site.register(Ticket)
