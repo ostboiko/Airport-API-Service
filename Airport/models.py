@@ -1,10 +1,8 @@
 import os
-import pathlib
 import uuid
 
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.conf import settings
 from django.utils.text import slugify
 
 
@@ -49,7 +47,7 @@ def create_custom_path(instance, filename):
 
 class AirplaneType(models.Model):
     name = models.CharField(max_length=255)
-    image = models.ImageField(null=True, upload_to="???") # TODO refactore!!
+    image = models.ImageField(null=True, upload_to="???")
 
     class Meta:
         ordering = ["name"]
@@ -98,18 +96,18 @@ class Ticket(models.Model):
     @staticmethod
     def validate_ticket(row, seat, flight, error_to_raise):
         try:
-            row = int(row)  # Перетворюємо рядок на ціле число
+            row = int(row)
         except ValueError:
             raise error_to_raise({"row": "Row number must be an integer."})
 
         try:
-            seat = int(seat)  # Перетворюємо місце на ціле число (якщо це число)
+            seat = int(seat)
         except ValueError:
             raise error_to_raise({"seat": "Seat number must be an integer."})
 
         for ticket_attr_value, ticket_attr_name, flight_attr_name in [
-            (row, "row", "total_rows"),  # Перевірка для кількості рядів
-            (seat, "seat", "seats_in_row"),  # Перевірка для кількості місць у ряду
+            (row, "row", "total_rows"),
+            (seat, "seat", "seats_in_row"),
         ]:
             count_attrs = getattr(flight, flight_attr_name)
             if not (1 <= ticket_attr_value <= count_attrs):
@@ -125,7 +123,7 @@ class Ticket(models.Model):
         Ticket.validate_ticket(
             self.row,
             self.seat,
-            self.flight,  # Використовуємо flight для перевірки
+            self.flight,
             ValidationError,
         )
 
@@ -136,7 +134,7 @@ class Ticket(models.Model):
         using=None,
         update_fields=None
     ):
-        self.full_clean()  # Викликаємо перевірку перед збереженням
+        self.full_clean()
         return super(Ticket, self).save(
             force_insert, force_update, using, update_fields
         )
