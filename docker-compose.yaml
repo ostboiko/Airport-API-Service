@@ -5,12 +5,12 @@ services:
     env_file:
       - .env
     ports:
-      - "8001:8000"
+      - "5434:5432"
     volumes:
       - ./:/app
       - my_media:/files/media
     command: >
-      sh -c "python manage.py test"
+      sh -c "python manage.py runserver"
     depends_on:
       - db
 
