@@ -8,3 +8,6 @@ venv/
 **__pycache__/
 **db.sqlite3
 media
+package.json
+package-lock.json
+node_modules
