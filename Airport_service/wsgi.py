@@ -1,5 +1,5 @@
 """
-WSGI config for Airport-API-service project.
+WSGI config for Airport_service project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
@@ -11,6 +11,6 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Airport-API-service.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Airport_service.settings')
 
 application = get_wsgi_application()
